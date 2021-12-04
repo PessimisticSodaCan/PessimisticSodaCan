@@ -1,7 +1,10 @@
 
 
+
 import pygame
-FPS = 80
+import time
+
+FPS = 60
 SIZE = [1050, 1050]
 
 
@@ -12,7 +15,9 @@ bg = [182, 194, 217]
 blue = [115,220,222]
 orange = [251,170,60]
 grey = [74,102,112]
+red = [255, 0, 0]
 white = [255,255,255]
+black = [0, 0, 0]
 
  
 # Field Width
@@ -36,30 +41,42 @@ class player():
       oldLocation.append(self.location[0])
       oldLocation.append(self.location[1])
 
+
+
       if direction == "R":
         if self.location[0] >= FW - 1:
+            print('Right')  
             return False
 
         if self.direction == "L":
-          self.location = self.location[0] - 1
+          self.location[0] = self.location[0] - 1
           self.direction = "L"
+
+        elif abs(opponentsLocation[0] - self.location[0]) == 1 and opponentsLocation[1] == self.location[1]:
+              print (self.location[0])
+              print(self.location[1])
+
+              return 1
+
 
         else:
           self.location[0] = self.location[0] + 1
           self.direction = direction
-              
+
+
         self.trail.append(oldLocation)
 
 
 
       elif direction == "L":
         if self.location[0] <= 0:
-
+          print('left')
           return False
         
         if self.direction == "R":
           self.location[0] = self.location[0] + 1
           self.direction = "R"
+
 
 
         else:
@@ -73,10 +90,14 @@ class player():
 
       elif direction == "U":
         if self.location[1] <= 0:
+          print('up')
           return False
         if self.direction == "D":
           self.location[1] = self.location[1] + 1
           self.direction = "D"
+
+        elif abs(opponentsLocation[1] - self.location[1]) == 1 and opponentsLocation[0] == self.location[0]:
+            return 1
 
 
         else:
@@ -87,9 +108,9 @@ class player():
 
 
 
-
       elif direction == "D":
         if self.location[1] >= FW - 1:
+          print('down')
           return False
         if self.direction == "U":
           self.location[1] = self.location[1] -1
@@ -105,11 +126,13 @@ class player():
       for point in self.trail:# collision detector
         if self.location[0] == point[0]:
           if self.location[1] == point[1]:
+            print('collision detector1')
             return False
 
-      for point in opponentsTrail:# collision detector
-        if self.location[0] == point[0]:
-          if self.location[1] == point[1]:
+      for event in opponentsTrail:# collision detector
+        if self.location[0] == event[0]:
+          if self.location[1] == event[1]:
+            print(" opp collision trail")
             return False
 
 
@@ -129,15 +152,16 @@ class player():
 
 class window():
     def __init__(self):
+      pygame.init()
       self.direction1 = ""
       self.direction2 = ""
       self.playing = True
-      self.player = -1
       self.player1 = player(blue, [5,1])
       self.player2 = player(orange, [44,1])
       self.field = []
       self.clock = pygame.time.Clock()
       self.winner = ""
+      self.font = pygame.font.SysFont("calibri", 24)
       
 
       #makes list for of rectangels for draw field funciton
@@ -186,7 +210,15 @@ class window():
 
     def main(self):
         self.screen = pygame.display.set_mode(SIZE)
+        self.screen.fill(bg)
+        self.drawField()
+        self.drawField1()
+        
+        self.drawPlayer1()
+        self.drawPlayer2()
 
+        self.drawPlayer1Trail()
+        self.drawPlayer2Trail()
 
         while self.playing == True:
             for event in pygame.event.get():
@@ -198,71 +230,146 @@ class window():
       #player one controls
     
               if pressed_keys[pygame.K_UP]:
-                self.direction1 = "U"
+                self.direction2 = "U"
 
               
               if pressed_keys[pygame.K_DOWN]:
-                self.direction1 = "D"
+                self.direction2 = "D"
 
 
 
               if pressed_keys[pygame.K_LEFT]:
-                self.direction1 = "L"
+                self.direction2 = "L"
               
               if pressed_keys[pygame.K_RIGHT]:
-                self.direction1 = "R"
+                self.direction2 = "R"
 
     #player two controls
 
 
               if pressed_keys[pygame.K_w]:
-                self.direction2 = "U"
+                self.direction1 = "U"
               
               if pressed_keys[pygame.K_s]:
-                self.direction2 = "D"
+                self.direction1 = "D"
 
               if pressed_keys[pygame.K_a]:
-                self.direction2 = "L"
+                self.direction1 = "L"
 
 
               
               if pressed_keys[pygame.K_d]:
-                self.direction2 = "R"
-                self.player = 2
+                self.direction1 = "R"
+        
 
           #updates the window screen
             self.screen.fill(bg)
             self.drawField()
             self.drawField1()
 
+            playing1 = self.player1.move(self.direction1,self.player2.getTrail(),self.player2.getLocation())
+            playing2 = self.player2.move(self.direction2,self.player1.getTrail(),self.player1.getLocation())
+
+           
             self.drawPlayer1()
             self.drawPlayer2()
 
             self.drawPlayer1Trail()
             self.drawPlayer2Trail()
 
-            playing1 = self.player1.move(self.direction1,self.player2.getTrail(),self.player2.getLocation())
-            playing2 = self.player2.move(self.direction2,self.player1.getTrail(),self.player1.getLocation())
+
+
 
             if playing1 == False:
               self.winner = "player 2"
               self.playing = False
+              print("player2")
             elif playing2 == False:
               self.winner = "player 1"
+              print("player2")
               self.playing = False
+
+
           
 
-            if self.player1.getLocation()[0] == self.player2.getLocation()[0]:
-              if self.player1.getLocation()[1] == self.player2.getLocation()[1]:
+            if self.player1.getLocation()[0] == self.player2.getLocation()[0] and self.player1.getLocation()[1] == self.player2.getLocation()[1]:
+
                 print("The game is a tie")
+
                 self.playing = False
 
+                rect = pygame.Rect(LEFTBORDER + (self.player2.location[0] * TILESIZE), TOPBORDER + (self.player2.location[1] * TILESIZE), TILESIZE, TILESIZE)
+
+                pygame.draw.rect(self.screen , red ,rect)
+
+                rect = pygame.Rect(LEFTBORDER + (self.player1.location[0] * TILESIZE), TOPBORDER + (self.player1.location[1] * TILESIZE), TILESIZE, TILESIZE)
+
+                pygame.draw.rect(self.screen , red ,rect)
+
+                Script = "The game is a tie"
+  
+
+                Winner = self.font.render(Script, True, black)
+
+
+                self.screen.blit(Winner,(400,400))
+                pygame.display.update()
+                time.sleep(10)
+
+            elif playing1 == 1:
+              self.playing = False
+              rect = pygame.Rect(LEFTBORDER + (self.player1.location[0] * TILESIZE), TOPBORDER + (self.player1.location[1] * TILESIZE), TILESIZE, TILESIZE)
+
+              pygame.draw.rect(self.screen , red ,rect)
+
+              rect2 = pygame.Rect(LEFTBORDER + (self.player2.location[0] * TILESIZE), TOPBORDER + (self.player2.location[1] * TILESIZE), TILESIZE, TILESIZE)
+
+              pygame.draw.rect(self.screen , red ,rect2)
+
+              Script = "The game is a tie"
+
+              Winner = self.font.render(Script, True, black)
+
+
+              self.screen.blit(Winner,(400,400))
+              pygame.display.update()
+              time.sleep(10)
+
+                
+
             elif self.playing == False:
-                print("The Winner is" , self.winner)
+                print("The Winner is" , str(self.winner))
 
 
-            pygame.display.update()
-            self.clock.tick(FPS)
+                if self.winner == "player 2":
+                  rect = pygame.Rect(LEFTBORDER + (self.player1.location[0] * TILESIZE), TOPBORDER + (self.player1.location[1] * TILESIZE), TILESIZE, TILESIZE)
+
+                  pygame.draw.rect(self.screen , red ,rect)
+
+                else:
+                  rect = pygame.Rect(LEFTBORDER + (self.player2.location[0] * TILESIZE), TOPBORDER + (self.player2.location[1] * TILESIZE), TILESIZE, TILESIZE)
+
+                  pygame.draw.rect(self.screen , red ,rect)
+                      
+                      
+
+                Script = ("The Winner is " + str(self.winner))
+
+
+                Winner = self.font.render(Script, True, black)
+
+
+                self.screen.blit(Winner,(400 ,400))
+                pygame.display.update()
+                time.sleep(10)
+                
+            else:
+              pygame.display.update()
+
+
+
+  
+
 
 
 
